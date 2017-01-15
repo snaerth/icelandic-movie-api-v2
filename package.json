@@ -4,13 +4,27 @@
   "description": "Movie API for Icelandic cinemas",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server/index.js",
+    "start": "NODE_ENV=production node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint"
   },
   "author": "Snær Seljan Þóroddsson",
   "license": "MIT",
   "dependencies": {
+    "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.15.2",
+    "dotenv": "^4.0.0",
+    "express": "^4.14.0",
+    "jwt-simple": "^0.5.1",
     "mongoose": "^4.7.6",
-    "morgan": "^1.7.0"
+    "morgan": "^1.7.0",
+    "passport": "^0.3.2",
+    "passport-jwt": "^2.2.1",
+    "passport-local": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb": "^14.0.0",
+    "nodemon": "^1.11.0"
   }
 }
