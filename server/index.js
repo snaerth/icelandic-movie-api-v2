@@ -5,18 +5,21 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const router = require('../server/router');
+const movieSync = require('../server/services/moviesync.js');
 const app = express();
 
 // -------------------------------
 // Create the database connection 
 var dbUrl = 'mongodb://localhost/movieapi';
 mongoose.connect(dbUrl, (error) => {
-    if(error) {
-        // Log error
-        console.log('Error', error);
-    } else {
-        // Start movie sync
-        console.log('Lets go');
+    if (!error) {
+        movieSync((error) => {
+            if (error) {
+                console.log('Error', error);
+            } else {
+                console.log('Success', 'Movie synd completed');
+            }
+        })
     }
 });
 
