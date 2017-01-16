@@ -39,8 +39,8 @@ function mergeMovieArrays(array) {
 
     // Push each movie into array
     for (let i = 0; i < array.length; i++) {
-        for (let j = 0; j < array[i].movies.length; j++) {
-            newArray.push(array[i].movies[j]);
+        for (let j = 0; j < array[i].data.length; j++) {
+            newArray.push(array[i].data[j]);
         }
     }
 
@@ -75,7 +75,7 @@ function getKvikmyndir() {
                 .then(data => {
                     arr.push({
                         day: i,
-                        movies: data
+                        data: data
                     });
 
                     cnt++;
@@ -129,11 +129,13 @@ function getPlotForMovies(movies) {
 // @returns {Array} movies - movies with plot object
 function addPlotToMovies(movies, plots) {
     for (let i = 0; i < movies.length; i++) {
-        for (let j = 0; j < movies[i].length; j++) {
-            let movie = movies[i][j];
+        for (let j = 0; j < movies[i].data.length; j++) {
+            let movie = movies[i].data[j];
 
             if (movie.ids && movie.ids.imdb) {
                 for (let k = 0; k < plots.length; k++) {
+                    movie.plot = '';
+
                     if (plots[k].imdb === movie.ids.imdb) {
                         movie.plot = plots[k].plot;
                     }
