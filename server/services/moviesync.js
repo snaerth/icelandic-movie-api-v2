@@ -5,6 +5,8 @@ const apiKey = process.env.API_KEY_KVIKMYNDIR;
 module.exports = (callback) => {
     let allMovies = []; // Contains all movies for 5 days in one big array [movie1, movie2, movie2, ...]
     let moviesByDay = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
+    let mergedList = []; // allMovies array merged into uniqe movie array
+    let upcomingMovies = [] // Contains upcoming movies [movie1, movie2, movie2, ...]
 
     getKvikmyndir()
         .then(data => {
@@ -13,17 +15,22 @@ module.exports = (callback) => {
 
             // Find uniqe movies by id in array, 
             let mergedList = _.uniqBy(allMovies, 'id');
+            // Get upcoming movies
+            return getUpcoming();
+        })
+        .then(data => {
+            upcomingMovies = data
+            mergedList = _.unionBy(mergedList, upcomingMovies, 'id');
 
             // Get plot for each movie in array
-            getPlotForMovies(mergedList)
-                .then(plots => {
-                    var test = addPlotToMovies(moviesByDay, plots);
-                    console.log(test);
-                })
-                .catch(error => console.error(error));
+            return getPlotForMovies(mergedList);
+
         })
-        .then()
-        .catch(error => {});
+        .then(data => {
+            var test = addPlotToMovies(moviesByDay, data);
+            console.log(test);
+        })
+        .catch(error => console.error(error));
 }
 
 // Iterates array of arrays, and puts those object into new array
@@ -39,6 +46,19 @@ function mergeMovieArrays(array) {
     }
 
     return newArray;
+}
+
+// Makes get request to Kvikmyndir.is API to get upcoming movies
+// @returns {Promise} Promise - the promise object
+function getUpcoming() {
+    return new Promise((resolve, reject) => {
+        const url = `http://kvikmyndir.is/api/movie_list_upcoming/?key=${apiKey}&count=100`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => resolve(arr))
+            .catch(error => reject(error));
+    });
 }
 
 // Makes get request to Kvikmyndir.is API to get movie showtimes
