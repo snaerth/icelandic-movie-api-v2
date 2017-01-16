@@ -19,7 +19,15 @@ mongoose.connect(dbUrl, (error) => {
             } else {
                 console.log('Success', 'Movie synd completed');
             }
-        })
+        });
+    }
+});
+
+movieSync((error) => {
+    if (error) {
+        console.log('Error', error);
+    } else {
+        console.log('Success', 'Movie synd completed');
     }
 });
 

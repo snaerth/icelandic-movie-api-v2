@@ -7,9 +7,9 @@ module.exports = (callback) => {
     let moviesByDay = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
 
     getKvikmyndir()
-        .then(movies => {
-            moviesByDay = movies
-            allMovies = mergeMovieArrays(movies);
+        .then(data => {
+            moviesByDay = data;
+            allMovies = mergeMovieArrays(data);
 
             // Find uniqe movies by id in array, 
             let mergedList = _.uniqBy(allMovies, 'id');
@@ -33,8 +33,8 @@ function mergeMovieArrays(array) {
 
     // Push each movie into array
     for (let i = 0; i < array.length; i++) {
-        for (let j = 0; j < array[i].length; j++) {
-            newArray.push(array[i][j]);
+        for (let j = 0; j < array[i].movies.length; j++) {
+            newArray.push(array[i].movies[j]);
         }
     }
 
@@ -46,7 +46,7 @@ function mergeMovieArrays(array) {
 function getKvikmyndir() {
     return new Promise((resolve, reject) => {
         let cnt = 0;
-        let movies = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
+        let arr = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
 
         for (let i = 0; i < 5; i++) {
             const url = `http://kvikmyndir.is/api/showtimes_by_date/?key=${apiKey}&dagur=${i}`;
@@ -54,12 +54,16 @@ function getKvikmyndir() {
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    movies.push(data);
+                    arr.push({
+                        day: i,
+                        movies: data
+                    });
+
                     cnt++;
 
                     // When all requests have finished, resolve promise
                     if (cnt === 5) {
-                        resolve(movies);
+                        resolve(arr);
                     }
                 })
                 .catch(error => reject(error));
@@ -109,6 +113,7 @@ function addPlotToMovies(movies, plots) {
     for (let i = 0; i < movies.length; i++) {
         for (let j = 0; j < movies[i].length; j++) {
             let movie = movies[i][j];
+
             if (movie.ids && movie.ids.imdb) {
                 for (let k = 0; k < plots.length; k++) {
                     if (plots[k].imdb === movie.ids.imdb) {
