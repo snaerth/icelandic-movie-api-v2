@@ -24,7 +24,6 @@ module.exports = (callback) => {
 
             // Get plot for each movie in array
             return getPlotForMovies(mergedList);
-
         })
         .then(data => {
             var test = addPlotToMovies(moviesByDay, data);
@@ -56,7 +55,7 @@ function getUpcoming() {
 
         fetch(url)
             .then(res => res.json())
-            .then(data => resolve(arr))
+            .then(data => resolve(data))
             .catch(error => reject(error));
     });
 }
