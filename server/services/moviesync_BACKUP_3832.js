@@ -128,6 +128,15 @@ function getPlotForMovies(movies) {
 // @param {Array} plots - Array of plot objects
 // @returns {Array} movies - movies with plot object
 function addPlotToMovies(movies, plots) {
+<<<<<<< HEAD
+    for(let i = 0; i < movies.length;i++) {
+        for(let j = 0; j < movies[i].length;j++) {
+            let movie = movies[i][j];
+            
+            if(movie.ids && movie.ids.imdb) {
+                for(let k = 0; k < plots.length;k++) {
+                    if(plots[k].imdb === movie.ids.imdb) {
+=======
     for (let i = 0; i < movies.length; i++) {
         for (let j = 0; j < movies[i].data.length; j++) {
             let movie = movies[i].data[j];
@@ -137,6 +146,7 @@ function addPlotToMovies(movies, plots) {
                     movie.plot = '';
 
                     if (plots[k].imdb === movie.ids.imdb) {
+>>>>>>> cef66cba6a240299193f68ff12c6f23893564e3d
                         movie.plot = plots[k].plot;
                     }
                 }
