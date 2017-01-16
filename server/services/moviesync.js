@@ -74,9 +74,8 @@ function getKvikmyndir() {
 // Makes get request to Kvikmyndir.is API and gets additonal information about movie
 // Specifically gets plot for movie
 // @param {Array} movies - Array of movie objects
-// @param {Function} callback - Callback function
 // @returns {Promise} Promise - the promise object
-function getPlotForMovies(movies, callback) {
+function getPlotForMovies(movies) {
     return new Promise((resolve, reject) => {
         let moviesWithPlot = [];
         let promises = [];
