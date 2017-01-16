@@ -23,14 +23,6 @@ mongoose.connect(dbUrl, (error) => {
     }
 });
 
-movieSync((error) => {
-    if (error) {
-        console.log('Error', error);
-    } else {
-        console.log('Success', 'Movie synd completed');
-    }
-});
-
 // -------------------------------
 // App setup
 app.use(morgan('combined'));

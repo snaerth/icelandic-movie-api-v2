@@ -6,7 +6,11 @@ module.exports = (callback) => {
     let allMovies = []; // Contains all movies for 5 days in one big array [movie1, movie2, movie2, ...]
     let moviesByDay = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
     let mergedList = []; // allMovies array merged into uniqe movie array
-    let upcomingMovies = [] // Contains upcoming movies [movie1, movie2, movie2, ...]
+    let upcomingMovies = {
+        date: null,
+        type: 'upcoming',
+        data: []
+    }; // Contains upcoming movies { ... ,data: [movie1, movie2, movie2, ...] }
 
     getKvikmyndir()
         .then(data => {
@@ -14,50 +18,28 @@ module.exports = (callback) => {
             allMovies = mergeMovieArrays(data);
 
             // Find uniqe movies by id in array, 
-            let mergedList = _.uniqBy(allMovies, 'id');
+            mergedList = _.uniqBy(allMovies, 'id');
             // Get upcoming movies
             return getUpcoming();
         })
         .then(data => {
-            upcomingMovies = data
-            mergedList = _.unionBy(mergedList, upcomingMovies, 'id');
+            upcomingMovies.date = Date.now();
+            upcomingMovies.data = data
+            mergedList = _.unionBy(mergedList, data, 'id');
 
             // Get plot for each movie in array
             return getPlotForMovies(mergedList);
         })
-        .then(data => {
-            var test = addPlotToMovies(moviesByDay, data);
-            console.log(test);
+        .then(plots => {
+            // Add plot to showtime movies
+            _.forEach(moviesByDay, (day, key) => {
+                day.data = addPlotToMovies(day.data, plots);
+            });
+
+            // Add plot to upcoming movies
+            upcomingMovies.data = addPlotToMovies(upcomingMovies.data, plots);
         })
         .catch(error => console.error(error));
-}
-
-// Iterates array of arrays, and puts those object into new array
-// @returns {Array} newArray
-function mergeMovieArrays(array) {
-    let newArray = [];
-
-    // Push each movie into array
-    for (let i = 0; i < array.length; i++) {
-        for (let j = 0; j < array[i].data.length; j++) {
-            newArray.push(array[i].data[j]);
-        }
-    }
-
-    return newArray;
-}
-
-// Makes get request to Kvikmyndir.is API to get upcoming movies
-// @returns {Promise} Promise - the promise object
-function getUpcoming() {
-    return new Promise((resolve, reject) => {
-        const url = `http://kvikmyndir.is/api/movie_list_upcoming/?key=${apiKey}&count=100`;
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => resolve(data))
-            .catch(error => reject(error));
-    });
 }
 
 // Makes get request to Kvikmyndir.is API to get movie showtimes
@@ -75,6 +57,8 @@ function getKvikmyndir() {
                 .then(data => {
                     arr.push({
                         day: i,
+                        date: Date.now(),
+                        type: 'showtimes',
                         data: data
                     });
 
@@ -84,9 +68,21 @@ function getKvikmyndir() {
                     if (cnt === 5) {
                         resolve(arr);
                     }
-                })
-                .catch(error => reject(error));
+                }).catch(error => reject(error));
         }
+    });
+}
+
+// Makes get request to Kvikmyndir.is API to get upcoming movies
+// @returns {Promise} Promise - the promise object
+function getUpcoming() {
+    return new Promise((resolve, reject) => {
+        const url = `http://kvikmyndir.is/api/movie_list_upcoming/?key=${apiKey}&count=100`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => resolve(data))
+            .catch(error => reject(error));
     });
 }
 
@@ -108,7 +104,8 @@ function getPlotForMovies(movies) {
                     if (data.plot && data.imdb) {
                         moviesWithPlot.push({
                             imdb: data.imdb,
-                            plot: data.plot
+                            text: data.plot,
+                            title: data.title
                         });
                     }
                 })
@@ -128,21 +125,30 @@ function getPlotForMovies(movies) {
 // @param {Array} plots - Array of plot objects
 // @returns {Array} movies - movies with plot object
 function addPlotToMovies(movies, plots) {
-    for (let i = 0; i < movies.length; i++) {
-        for (let j = 0; j < movies[i].data.length; j++) {
-            let movie = movies[i].data[j];
+    _.forEach(movies, function (movie, key) {
+        if (movie.ids && movie.ids.imdb) {
+            const matchedPlot = _.find(plots, o => o.imdb == movie.ids.imdb);
+            movie.plot = {
+                is: matchedPlot ? matchedPlot.text : '',
+                en: ''
+            };
+        }
+    });
 
-            if (movie.ids && movie.ids.imdb) {
-                for (let k = 0; k < plots.length; k++) {
-                    movie.plot = '';
+    return movies;
+}
 
-                    if (plots[k].imdb === movie.ids.imdb) {
-                        movie.plot = plots[k].plot;
-                    }
-                }
-            }
+// Iterates array of arrays, and puts those object into new array
+// @returns {Array} newArray
+function mergeMovieArrays(array) {
+    let newArray = [];
+
+    // Push each movie into array
+    for (let i = 0; i < array.length; i++) {
+        for (let j = 0; j < array[i].data.length; j++) {
+            newArray.push(array[i].data[j]);
         }
     }
 
-    return movies;
+    return newArray;
 }
