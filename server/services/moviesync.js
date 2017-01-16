@@ -80,6 +80,7 @@ function addPlotToMovies(movies, plots) {
     for(let i = 0; i < movies.length;i++) {
         for(let j = 0; j < movies[i].length;j++) {
             let movie = movies[i][j];
+            
             if(movie.ids && movie.ids.imdb) {
                 for(let k = 0; k < plots.length;k++) {
                     if(plots[k].imdb === movie.ids.imdb) {
