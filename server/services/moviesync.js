@@ -43,6 +43,11 @@ module.exports = (callback) => {
         }).catch(error => console.error(error));
 }
 
+/**
+ * Gets trailers for multiple movies from TMDB API
+ * @param {Array} movies - Array of movie objects
+ * @returns {Promise} promise - When all promises have resolved then trailersArr is returned
+ */
 function getTrailers(movies) {
     return new Promise((resolve, reject) => {
         let trailersArr = []; // Contains all trailers object
