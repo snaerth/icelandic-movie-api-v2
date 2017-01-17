@@ -16,10 +16,8 @@ module.exports = (callback) => {
         .then(data => {
             moviesByDay = data;
             allMovies = mergeMovieArrays(data);
+            mergedList = _.uniqBy(allMovies, 'id'); // Find uniqe movies by id in array, 
 
-            // Find uniqe movies by id in array, 
-            mergedList = _.uniqBy(allMovies, 'id');
-            // Get upcoming movies
             return getUpcoming();
         })
         .then(data => {
@@ -31,45 +29,42 @@ module.exports = (callback) => {
             return getPlotForMovies(mergedList);
         })
         .then(plots => {
-            // Add plot to showtime movies
+            // Add plot to showtime movies and upcoming movies
             _.forEach(moviesByDay, (day, key) => {
                 day.data = addPlotToMovies(day.data, plots);
             });
 
-            // Add plot to upcoming movies
             upcomingMovies.data = addPlotToMovies(upcomingMovies.data, plots);
-        })
-        .catch(error => console.error(error));
+        }).catch(error => console.error(error));
 }
 
 // Makes get request to Kvikmyndir.is API to get movie showtimes
 // @returns {Promise} Promise - the promise object
 function getKvikmyndir() {
     return new Promise((resolve, reject) => {
-        let cnt = 0;
-        let arr = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
+        let movieArr = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
+        let promises = [];
 
         for (let i = 0; i < 5; i++) {
             const url = `http://kvikmyndir.is/api/showtimes_by_date/?key=${apiKey}&dagur=${i}`;
 
-            fetch(url)
+            const request = fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    arr.push({
+                    movieArr.push({
                         day: i,
                         date: Date.now(),
                         type: 'showtimes',
                         data: data
                     });
-
-                    cnt++;
-
-                    // When all requests have finished, resolve promise
-                    if (cnt === 5) {
-                        resolve(arr);
-                    }
                 }).catch(error => reject(error));
+
+            promises.push(request);
         }
+
+        Promise.all(promises)
+            .then(() => resolve(movieArr))
+            .catch(error => reject(error));
     });
 }
 
