@@ -8,9 +8,6 @@ exports.validateEmail = (email) => {
     return re.test(email);
 }
 
-
-
-
 /**
  * Deep trims every property in object
  * @param {Object} obj - incoming argument to trim
@@ -38,6 +35,7 @@ exports.deepTrim = (obj) => {
 exports.splitToChunks = (arr, chunk) => {
     var chunk = chunk;
     var newarr = new Array();
+    
     for (var i = 0; i < arr.length; i = i + chunk) {
         newarr.push(arr.slice(i, i + chunk));
     }
