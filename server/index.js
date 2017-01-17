@@ -23,6 +23,8 @@ mongoose.connect(dbUrl, (error) => {
     }
 });
 
+// Only if no access to database
+// Remember to remove
 movieSync((error) => {
     if (error) {
         console.log('Error', error);
