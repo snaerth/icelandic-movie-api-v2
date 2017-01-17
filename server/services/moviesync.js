@@ -1,4 +1,7 @@
 const fetch = require('node-fetch');
+const {
+    splitToChunks
+} = require('./utils');
 const _ = require('lodash');
 const apiKeyKvikmyndir = process.env.API_KEY_KVIKMYNDIR;
 const apiKeyTmdb = process.env.API_KEY_TMDB;
@@ -20,79 +23,102 @@ module.exports = (callback) => {
             mergedList = _.uniqBy(allMovies, 'id'); // Find uniqe movies by id in array, 
 
             return getUpcoming();
-        })
-        .then(data => {
+        }).then(data => {
             upcomingMovies.date = Date.now();
             upcomingMovies.data = data
             mergedList = _.unionBy(mergedList, data, 'id');
 
             return getPlotForMovies(mergedList); // Get plot for each movie in array
-        })
-        .then(plots => {
+        }).then(plots => {
             // Add plot to showtime movies and upcoming movies
             _.forEach(moviesByDay, (day, key) => {
                 day.data = addPlotToMovies(day.data, plots);
             });
 
             upcomingMovies.data = addPlotToMovies(upcomingMovies.data, plots);
-            const trailers = getTrailers(allMovies); // BÆTA VIÐ UPCOMING
-            const test = '';
+
+            return getTrailers(mergedList);
+        }).then(trailers => {
+            console.log(trailers);
         }).catch(error => console.error(error));
 }
 
 function getTrailers(movies) {
     return new Promise((resolve, reject) => {
         let trailersArr = []; // Contains all trailers object
-        let promises = [];
+        let promisesOuter = [];
+        const maxLength = 30; // TMDB has 30 request per 10 seconds
 
-        _.forEach(movies, (movie) => {
-            if (movie.ids && movie.ids.imdb) {
-                const imdbId = movie.ids.imdb.indexOf('tt') > -1 ? movie.ids.imdb : `tt${movie.ids.imdb}`;
-                const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
+        if (movies.length > maxLength) {
+            var movieChunks = splitToChunks(movies, maxLength);
 
-                const request = fetch(url)
-                    .then(res => res.json())
-                    .then(trailers => {
-                        if (trailers.results && trailers.results.length > 0) {
-                            let trailersObj = {
-                                imdb: movie.ids.imdb,
-                                data: []
-                            }
+            for (let i = 0; i < movieChunks.length; i++) {
+                let promisesInner = [];
 
-                            _.forEach(trailers, (trailer) => {
-                                trailersObj.data.push({
-                                    id: trailer.id,
-                                    url: `https://www.youtube.com/embed/${trailer.key}&rel=0`,
-                                    size: trailer.size,
-                                    name: trailer.name
+                setTimeout(() => {
+                    _.forEach(movieChunks[i], (movie) => {
+                        if (movie.ids && movie.ids.imdb) {
+                            const imdbId = movie.ids.imdb.indexOf('tt') > -1 ? movie.ids.imdb : `tt${movie.ids.imdb}`;
+                            const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
+
+                            const request = fetch(url)
+                                .then(res => res.json())
+                                .then(trailers => {
+                                    if (trailers.results && trailers.results.length > 0) {
+                                        const trailersObj = createTrailerObject(movie.ids.imdb, trailers.results);
+                                        trailersArr.push(trailersObj);
+                                    }
+                                }).catch(error => {
+                                    return reject(error);
                                 });
-                            });
 
-                            trailersArr.push(trailersObj);
+                            promisesInner.push(request);
                         }
-                    }).catch(error => {return console.log(error);reject(error)});
-
-                promises.push(request);
+                    });
+                }, (i === 0) ? 0 : 12000); // Set the request limit to 12 seconds because of TMDB request limit
             }
-        });
+        }
 
-        Promise.all(promises)
+        const promiseAll = Promise.all(
+            promisesOuter.map((promisesInner) => {
+                return Promise.all(promisesInner);
+            })
+        );
+
+        promiseAll
             .then(() => resolve(trailersArr))
             .catch(error => reject(error));
     });
-
-    //config.themoviedburl + 'tt' + imdbid + '/videos?api_key='
-    //   var trailers = JSON.parse(data);
-    //     if(trailers.results && trailers.results.length > 0) {
-    //         for(var t = 0; t < trailers.results.length; t++) {
-    //             trailers.results[t].url = 'https://www.youtube.com/embed/' + trailers.results[t].key + '?rel=0';
-    //         }
-    //     }
-    //     film.trailers.push(trailers);
 }
 
-// Makes get request to Kvikmyndir.is API to get movie showtimes
-// @returns {Promise} Promise - the promise object
+/**
+ * Creates new trailer object from TMDB trailer object
+ * @param {String} imdbId - Imdb id
+ * @param {Array} trailers - Array of trailer objecs
+ * @returns {Object} trailersObj - newly created trailer object
+ */
+function createTrailerObject(imdbId, trailers) {
+    let trailersObj = {
+        imdb: imdbId,
+        data: []
+    };
+
+    _.forEach(trailers, (trailer) => {
+        trailersObj.data.push({
+            id: trailer.id,
+            url: `https://www.youtube.com/embed/${trailer.key}?rel=0`,
+            size: trailer.size,
+            name: trailer.name
+        });
+    });
+
+    return trailersObj;
+}
+
+/**
+ * Makes get request to Kvikmyndir.is API to get movie showtimes
+ * @returns {Promise} Promise - the promise object
+ */
 function getKvikmyndir() {
     return new Promise((resolve, reject) => {
         let movieArr = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
@@ -121,8 +147,10 @@ function getKvikmyndir() {
     });
 }
 
-// Makes get request to Kvikmyndir.is API to get upcoming movies
-// @returns {Promise} Promise - the promise object
+/**
+ * Makes get request to Kvikmyndir.is API to get upcoming movies
+ * @returns {Promise} Promise - the promise object
+ */
 function getUpcoming() {
     return new Promise((resolve, reject) => {
         const url = `http://kvikmyndir.is/api/movie_list_upcoming/?key=${apiKeyKvikmyndir}&count=100`;
@@ -134,10 +162,12 @@ function getUpcoming() {
     });
 }
 
-// Makes get request to Kvikmyndir.is API and gets additonal information about movie
-// Specifically gets plot for movie
-// @param {Array} movies - Array of movie objects
-// @returns {Promise} Promise - the promise object
+/**
+ * Makes get request to Kvikmyndir.is API and gets additonal information about movie
+ * Specifically gets plot for movie
+ * @param {Array} movies - Array of movie objects
+ * @returns {Promise} Promise - the promise object
+ */
 function getPlotForMovies(movies) {
     return new Promise((resolve, reject) => {
         let moviesWithPlot = [];
@@ -167,10 +197,12 @@ function getPlotForMovies(movies) {
     });
 }
 
-// Adds plot property to movies
-// @param {Array} movies - Array of movie objects
-// @param {Array} plots - Array of plot objects
-// @returns {Array} movies - movies with plot object
+/**
+ * Adds plot property to movies
+ * @param {Array} movies - Array of movie objects
+ * @param {Array} plots - Array of plot objects
+ * @returns {Array} movies - movies with plot object
+ */
 function addPlotToMovies(movies, plots) {
     _.forEach(movies, function (movie, key) {
         if (movie.ids && movie.ids.imdb) {
@@ -185,8 +217,11 @@ function addPlotToMovies(movies, plots) {
     return movies;
 }
 
-// Iterates array of arrays, and puts those object into new array
-// @returns {Array} newArray
+/**
+ * Iterates array of arrays, and puts those object into new array
+ * @param {Array} array
+ * @returns {Array} newArray
+ */
 function mergeMovieArrays(array) {
     let newArray = [];
 
