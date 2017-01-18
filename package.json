@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Movie API for Icelandic cinemas",
   "main": "index.js",
+  "engines": {
+    "node": ">=7.0.0"
+  },
   "scripts": {
     "dev": "nodemon server/index.js",
     "start": "NODE_ENV=production node server/index.js",
