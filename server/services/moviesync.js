@@ -51,7 +51,7 @@ module.exports = (callback) => {
 function getTrailers(movies) {
     return new Promise((resolve, reject) => {
         let trailersArr = []; // Contains all trailers object
-        let promisesOuter = [];
+        let promises = [];
         const maxLength = 30; // TMDB has 30 request per 10 seconds
 
         if (movies.length > maxLength) {
@@ -66,17 +66,10 @@ function getTrailers(movies) {
                             const imdbId = movie.ids.imdb.indexOf('tt') > -1 ? movie.ids.imdb : `tt${movie.ids.imdb}`;
                             const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
 
-                            const request = fetch(url)
-                                .then(res => res.json())
-                                .then(trailers => {
-                                    if (trailers.results && trailers.results.length > 0) {
-                                        const trailersObj = createTrailerObject(movie.ids.imdb, trailers.results);
-                                        trailersArr.push(trailersObj);
-                                    }
-                                }).catch(error => {
-                                    return reject(error);
-                                });
-
+                            const request = getTrailersRequest(url)
+                                .then(trailer => trailersArr.push(trailer))
+                                .catch(error => reject(error));
+                            
                             promisesInner.push(request);
                         }
                     });
@@ -85,7 +78,7 @@ function getTrailers(movies) {
         }
 
         const promiseAll = Promise.all(
-            promisesOuter.map((promisesInner) => {
+            promises.map((promisesInner) => {
                 return Promise.all(promisesInner);
             })
         );
@@ -93,6 +86,19 @@ function getTrailers(movies) {
         promiseAll
             .then(() => resolve(trailersArr))
             .catch(error => reject(error));
+    });
+}
+
+function getTrailersRequest(url) {
+    return new Promise((resolve, reject) => {
+        fetch(url)
+            .then(res => res.json())
+            .then(trailers => {
+                if (trailers.results && trailers.results.length > 0) {
+                    const trailersObj = createTrailerObject(movie.ids.imdb, trailers.results);
+                    return resolve(trailersObj);
+                }
+            }).catch(error => reject(error));
     });
 }
 
