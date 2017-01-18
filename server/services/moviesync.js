@@ -52,53 +52,46 @@ function getTrailers(movies) {
     return new Promise((resolve, reject) => {
         let trailersArr = []; // Contains all trailers object
         let promises = [];
-        const maxLength = 30; // TMDB has 30 request per 10 seconds
 
-        if (movies.length > maxLength) {
-            var movieChunks = splitToChunks(movies, maxLength);
+        for (let i = 0; i < movies.length; i++) {
+            const movie = movies[i];
 
-            for (let i = 0; i < movieChunks.length; i++) {
-                let promisesInner = [];
+            if (movie.ids && movie.ids.imdb) {
+                const imdbId = movie.ids.imdb.indexOf('tt') > -1 ? movie.ids.imdb : `tt${movie.ids.imdb}`;
+                const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
+                const delay = 400 * i; // TMDB has 30 request per 10 seconds
 
-                setTimeout(() => {
-                    _.forEach(movieChunks[i], (movie) => {
-                        if (movie.ids && movie.ids.imdb) {
-                            const imdbId = movie.ids.imdb.indexOf('tt') > -1 ? movie.ids.imdb : `tt${movie.ids.imdb}`;
-                            const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
-
-                            const request = getTrailersRequest(url)
-                                .then(trailer => trailersArr.push(trailer))
-                                .catch(error => reject(error));
-                            
-                            promisesInner.push(request);
+                const request = getTrailersRequest(url, imdbId, delay)
+                    .then(trailer => {
+                        if (trailer) {
+                            trailersArr.push(trailer);
                         }
-                    });
-                }, (i === 0) ? 0 : 12000); // Set the request limit to 12 seconds because of TMDB request limit
+                    })
+                    .catch(error => reject(error));
+                promises.push(request);
             }
         }
 
-        const promiseAll = Promise.all(
-            promises.map((promisesInner) => {
-                return Promise.all(promisesInner);
-            })
-        );
-
-        promiseAll
+        Promise.all(promises)
             .then(() => resolve(trailersArr))
             .catch(error => reject(error));
     });
 }
 
-function getTrailersRequest(url) {
+function getTrailersRequest(url, imdbId, delay) {
     return new Promise((resolve, reject) => {
-        fetch(url)
-            .then(res => res.json())
-            .then(trailers => {
-                if (trailers.results && trailers.results.length > 0) {
-                    const trailersObj = createTrailerObject(movie.ids.imdb, trailers.results);
+        setTimeout(() => {
+            fetch(url)
+                .then(res => res.json())
+                .then(trailers => {
+                    if (!trailers && !trailers.results) {
+                        return resolve();
+                    } 
+                    
+                    const trailersObj = createTrailerObject(imdbId, trailers.results);
                     return resolve(trailersObj);
-                }
-            }).catch(error => reject(error));
+                }).catch(error => reject(error));
+        }, delay);
     });
 }
 
