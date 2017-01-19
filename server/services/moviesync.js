@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const _ = require('lodash');
 const apiKeyKvikmyndir = process.env.API_KEY_KVIKMYNDIR;
 const apiKeyTmdb = process.env.API_KEY_TMDB;
+const mlabDevUrl = process.env.MLAB_DEV_URL;
 
 const MongoClient = require('mongodb').MongoClient;
 
@@ -62,7 +63,7 @@ module.exports = (callback) => {
 
             upcomingMovies.data = extendMoviesObjects(upcomingMovies.data, plotsArr, trailersArr, imagesArr, omdbArr);
 
-            MongoClient.connect('mongodb://snaerth:JaN.C5.1@ds056698.mongolab.com:56698/icelandicmoviesapi', function (err, db) {
+            MongoClient.connect(mlabDevUrl, function (err, db) {
                 insertDocument(db, moviesByDay[0].data, function () {
                     db.close();
                 });
