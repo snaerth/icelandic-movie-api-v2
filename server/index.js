@@ -13,13 +13,7 @@ const app = express();
 var dbUrl = 'mongodb://localhost/movieapi';
 mongoose.connect(dbUrl, (error) => {
     if (!error) {
-        // movieSync((error) => {
-        //     if (error) {
-        //         console.log('Error', error);
-        //     } else {
-        //         console.log('Success', 'Movie synd completed');
-        //     }
-        // });
+        
     }
 });
 

@@ -227,7 +227,7 @@ braces@^1.8.2:
     preserve "^0.2.0"
     repeat-element "^1.1.2"
 
-bson@~1.0.1:
+bson@~1.0.1, bson@~1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/bson/-/bson-1.0.4.tgz#93c10d39eaa5b58415cbc4052f3e53e562b0b72c"
 
@@ -1442,12 +1442,27 @@ mongodb-core@2.1.2:
     bson "~1.0.1"
     require_optional "~1.0.0"
 
+mongodb-core@2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/mongodb-core/-/mongodb-core-2.1.6.tgz#9d179e7487767c58993bb7c8d6685d035c346a42"
+  dependencies:
+    bson "~1.0.4"
+    require_optional "~1.0.0"
+
 mongodb@2.2.16:
   version "2.2.16"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.16.tgz#e32ba91cf9e29f371fb38ba0c4a71c3b1f5fae77"
   dependencies:
     es6-promise "3.2.1"
     mongodb-core "2.1.2"
+    readable-stream "2.1.5"
+
+mongodb@^2.2.21:
+  version "2.2.21"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-2.2.21.tgz#f7ee56489600e0ac8024c062c0857ac04ddb5f48"
+  dependencies:
+    es6-promise "3.2.1"
+    mongodb-core "2.1.6"
     readable-stream "2.1.5"
 
 mongoose@^4.7.6:
@@ -1527,6 +1542,10 @@ nested-error-stacks@^1.0.0:
   resolved "https://registry.yarnpkg.com/nested-error-stacks/-/nested-error-stacks-1.0.2.tgz#19f619591519f096769a5ba9a86e6eeec823c3cf"
   dependencies:
     inherits "~2.0.1"
+
+node-cron@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/node-cron/-/node-cron-1.1.2.tgz#6f7f6e14e05f3885f8ebc6eee2882a6e17e6b9a7"
 
 node-fetch@^2.0.0-alpha.1:
   version "2.0.0-alpha.1"
