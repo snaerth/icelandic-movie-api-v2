@@ -1,7 +1,4 @@
 const fetch = require('node-fetch');
-const {
-    splitToChunks
-} = require('./utils');
 const _ = require('lodash');
 const apiKeyKvikmyndir = process.env.API_KEY_KVIKMYNDIR;
 const apiKeyTmdb = process.env.API_KEY_TMDB;
@@ -42,7 +39,7 @@ module.exports = (callback) => {
 
             upcomingMovies.data = addPlotToMovies(upcomingMovies.data, plotsArr);
 
-            return getTrailers(mergedList); // Get trailers for each movie in array
+            return getTmdbData(mergedList, getTrailersRequest, 'videos'); // Get trailers for each movie in array
         }).then(trailersData => {
             trailersArr = trailersData;
             return getOmdbData(mergedList); // Get omdb information for each movie in array
@@ -154,13 +151,15 @@ function addPlotToMovies(movies, plots) {
 }
 
 /**
- * Gets trailers for multiple movies from TMDB API
+ * Gets trailers or videos for multiple movies from TMDB API
  * @param {Array} movies - Array of movie objects
+ * @param {Function} fn - Function to run
+ * @param {String} type - Request type in url videos or images
  * @returns {Promise} promise - When all promises have resolved then trailersArr is returned
  */
-function getTrailers(movies) {
+function getTmdbData(movies, fn, type) {
     return new Promise((resolve, reject) => {
-        let trailersArr = []; // Contains all trailers object
+        let dataArr = [];
         let promises = [];
 
         for (let i = 0; i < movies.length; i++) {
@@ -168,13 +167,13 @@ function getTrailers(movies) {
 
             if (movie.ids && movie.ids.imdb) {
                 const imdbId = formatImdbId(movie.ids.imdb);
-                const url = `https://api.themoviedb.org/3/movie/${imdbId}/videos?api_key=${apiKeyTmdb}`;
+                const url = `https://api.themoviedb.org/3/movie/${imdbId}/${type}?api_key=${apiKeyTmdb}`;
                 const delay = 400 * i; // TMDB has 30 request per 10 seconds
 
-                const request = getTrailersRequest(url, imdbId, delay)
-                    .then(trailer => {
-                        if (trailer) {
-                            trailersArr.push(trailer);
+                const request = fn(url, imdbId, delay)
+                    .then(data => {
+                        if (data) {
+                            dataArr.push(data);
                         }
                     })
                     .catch(error => reject(error));
@@ -183,7 +182,7 @@ function getTrailers(movies) {
         }
 
         Promise.all(promises)
-            .then(() => resolve(trailersArr))
+            .then(() => resolve(dataArr))
             .catch(error => reject(error));
     });
 }
