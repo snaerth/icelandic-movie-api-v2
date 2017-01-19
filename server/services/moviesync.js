@@ -4,17 +4,24 @@ const apiKeyKvikmyndir = process.env.API_KEY_KVIKMYNDIR;
 const apiKeyTmdb = process.env.API_KEY_TMDB;
 
 module.exports = (callback) => {
-    let allMovies = []; // Contains all movies for 5 days in one big array [movie1, movie2, movie2, ...]
-    let moviesByDay = []; // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
-    let mergedList = []; // allMovies array merged into uniqe movie array
+    // Contains all movies for 5 days in one big array [movie1, movie2, movie2, ...]
+    let allMovies = []; 
+    // Contains all movies for 5 days [[day0]], [day1]], [day2]], ...]
+    let moviesByDay = []; 
+    // allMovies array merged into uniqe movie array
+    let mergedList = []; 
+    // Contains upcoming movies { ... ,data: [movie1, movie2, movie2, ...] }
     let upcomingMovies = {
         date: null,
         type: 'upcoming',
         data: []
-    }; // Contains upcoming movies { ... ,data: [movie1, movie2, movie2, ...] }
-    let plotsArr = []; // Array of movie plots object [{imdb:'tt0317248',text: 'This is movie plot text'}, ...]
-    let trailersArr = [] // Array of trailer information for movie [{imdb:'tt0317248',data: [{...}, {...}, ...]]
-    let omdbArr = [] // Array of omdb information for movie [{imdb:'tt0317248',data: {...}, ...]
+    }; 
+    // Array of movie plots object [{imdb:'tt0317248',text: 'This is movie plot text'}, ...]
+    let plotsArr = []; 
+    // Array of trailer information for movie [{imdb:'tt0317248',data: [{...}, {...}, ...]]
+    let trailersArr = [];
+    // Array of omdb information for movie [{imdb:'tt0317248',data: {...}, ...]
+    let omdbArr = []; 
 
     getKvikmyndir()
         .then(data => {
