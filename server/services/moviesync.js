@@ -92,6 +92,8 @@ function insertDocument(db, documents, callback) {
  * @returns {Array} movies - Array of extended movie objects
  */
 function extendMoviesObjects(movies, plots, trailers, images, omdb) {
+    const propsToDelete = ['directors_abridged', 'actors_abridged', 'alternativeTitles'];
+
     _.forEach(movies, (movie) => {
         movie.ids.imdb = formatImdbId(movie.ids.imdb);
         const imdbId = movie.ids.imdb;
@@ -138,7 +140,6 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             });
 
             movie.actors = actors;
-            delete movie.actors_abridged;
         }
 
         // DIRECTORS
@@ -152,10 +153,12 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             });
 
             movie.directors = directors;
-            delete movie.directors_abridged;
         }
 
-        if (movie.alternativeTitles) delete movie.alternativeTitles;
+        // DELETE props from object
+        _.forEach(propsToDelete, item => {
+            if(movie[item]) delete movie[item];
+        });
     });
 
     return movies;
