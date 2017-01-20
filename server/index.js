@@ -8,15 +8,6 @@ const router = require('../server/router');
 const movieSync = require('../server/services/moviesync.js');
 const app = express();
 
-// -------------------------------
-// Create the database connection 
-var dbUrl = 'mongodb://localhost/movieapi';
-mongoose.connect(dbUrl, (error) => {
-    if (!error) {
-        
-    }
-});
-
 movieSync((error) => {
     if (error) {
         console.log('Error', error);

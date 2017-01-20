@@ -12,7 +12,7 @@ exports.validateEmail = (email) => {
  * Deep trims every property in object
  * @param {Object} obj - incoming argument to trim
  */
-exports.deepTrim = (obj) => {
+exports.deepTrim = function deepTrim(obj) {
     for (var prop in obj) {
         var value = obj[prop], type = typeof value;
         if (value != null && (type == "string" || type == "object") && obj.hasOwnProperty(prop)) {
