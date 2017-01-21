@@ -60,12 +60,24 @@ module.exports = (callback) => {
         }).then(omdbData => {
             omdbArr = omdbData;
 
+            const propsToDelete = [
+                'directors_abridged',
+                'actors_abridged',
+                'alternativeTitles',
+                'alternative_titles',
+                'ids',
+                'id',
+                'certificateImg',
+                'certificateIS',
+                'ratings'
+            ];
+
             _.forEach(moviesByDay, (day, key) => {
-                day.data = extendMoviesObjects(day.data, plotsArr, trailersArr, imagesArr, omdbArr);
+                day.data = extendMoviesObjects(day.data, plotsArr, trailersArr, imagesArr, omdbArr, propsToDelete);
             });
 
 
-            upcomingMovies.data = extendMoviesObjects(upcomingMovies.data, plotsArr, trailersArr, imagesArr, omdbArr);
+            upcomingMovies.data = extendMoviesObjects(upcomingMovies.data, plotsArr, trailersArr, imagesArr, omdbArr, propsToDelete);
 
             MongoClient.connect(mlabDevUrl, function (err, db) {
                 insertDocument(db, moviesByDay[0].data, function () {
@@ -95,10 +107,8 @@ function insertDocument(db, documents, callback) {
  * @param {Array} omdb - Array of omdb objects
  * @returns {Array} movies - Array of extended movie objects
  */
-function extendMoviesObjects(movies, plots, trailers, images, omdb) {
-    const propsToDelete = ['directors_abridged', 'actors_abridged', 'alternativeTitles', 'alternative_titles', 'ids', 'id', 'certificateImg', 'certificateIS', 'ratings'];
-
-    _.forEach(movies, (movie) => {
+function extendMoviesObjects(movies, plots, trailers, images, omdb, propsToDelete) {
+    movies.forEach(movie => {
         const imdbId = formatImdbId(movie.ids.imdb);
 
         // Create kvikmyndir object
@@ -106,9 +116,6 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             id: movie.id ? movie.id : '',
             url: movie.id ? `http://kvikmyndir.is/mynd/?id=${movie.id}` : ''
         }
-
-        // Create Rotten Tomatos object
-        movie.rottenTomatoes = {};
 
         // Create rated object
         movie.rated = {
@@ -119,7 +126,7 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
         // IMDB
         movie.imdb = {
             id: imdbId,
-            rating: movie.ratings.imdb,
+            rating: (movie && movie.ratings && movie.ratings.imdb),
             url: `http://www.imdb.com/title/${imdbId}/`,
             votes: ''
         }
@@ -130,6 +137,9 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             const omdbProps = ['Country', 'Awards', 'Website'];
 
             if (omdbObj && omdbObj.data) {
+                // Create Rotten Tomatos object
+                movie.rottenTomatoes = {};
+
                 for (var key in omdbObj.data) {
                     // Check if property is not inherited from prototype
                     if (omdbObj.data.hasOwnProperty(key)) {
@@ -147,9 +157,9 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
 
                         // Rated
                         const rated = omdbObj.data.Rated;
-                        if(rated &&rated !== 'N/A') {
+                        if (rated && rated !== 'N/A') {
                             movie.rated.en = rated;
-                        }   
+                        }
 
                         // IMDB rating
                         const rating = omdbObj.data.imdbRating;
@@ -164,12 +174,12 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
                         }
                     }
                 }
-            }
-        }
 
-        // If not tomatoRating
-        if (movie.rottenTomatoes.tomatoRating === '' && movie.ids && movie.ids.rotten !== '') {
-            movie.rottenTomatoes.tomatoRating = movie.ids.rotten;
+                // If not tomatoRating
+                if (movie.rottenTomatoes.tomatoRating === '' && movie.ids && movie.ids.rotten !== '') {
+                    movie.rottenTomatoes.tomatoRating = movie.ids.rotten;
+                }
+            }
         }
 
         // GENRES
@@ -193,17 +203,14 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             const matchedPlot = _.find(plots, p => p.imdb === imdbId);
             movie.plot = {
                 is: (matchedPlot && matchedPlot.text) ? matchedPlot.text : '',
-                en: (omdb && omdb.data.Plot) ? omdb.data.Plot : ''
+                en: (omdb && omdb.data && omdb.data.Plot) ? omdb.data.Plot : ''
             };
         }
 
         // TRAILERS
         if (trailers && trailers.length > 0) {
             const matchedTrailer = _.find(trailers, trailer => trailer.imdb === imdbId);
-
-            if (matchedTrailer && matchedTrailer.data) {
-                movie.trailers = matchedTrailer.data;
-            }
+            if (matchedTrailer && matchedTrailer.data) movie.trailers = matchedTrailer.data;
         }
 
         // IMAGES
@@ -218,37 +225,24 @@ function extendMoviesObjects(movies, plots, trailers, images, omdb) {
             }
         }
 
-        // REFACTOR propertyes
         // ACTORS
         if (movie.actors_abridged && movie.actors_abridged.length > 0) {
-            const actors = [];
-
-            _.forEach(movie.actors_abridged, actor => {
-                if (actor.name) {
-                    actors.push(actor.name);
-                }
-            });
-
-            movie.actors = actors;
+            const getActorName = d => d.name;
+            movie.actors = movie.actors_abridged.map(getActorName);
         }
 
         // DIRECTORS
         if (movie.directors_abridged && movie.directors_abridged.length > 0) {
-            const directors = [];
-
-            _.forEach(movie.directors_abridged, director => {
-                if (director.name) {
-                    directors.push(director.name);
-                }
-            });
-
-            movie.directors = directors;
+            const getDirectorName = d => d.name;
+            movie.directors = movie.directors_abridged.map(getDirectorName);
         }
 
         // DELETE props from object
-        _.forEach(propsToDelete, item => {
+        const deleteItem = item => {
             if (movie[item]) delete movie[item];
-        });
+        }
+
+        propsToDelete.map(deleteItem);
 
         // Deep trims every property and its children
         movie = deepTrim(movie);
@@ -315,23 +309,24 @@ function getPlotForMovies(movies) {
         let moviesWithPlot = [];
         let promises = [];
 
-        for (let i = 0; i < movies.length; i++) {
-            const imdbId = movies[i].ids.imdb;
-            const url = `http://kvikmyndir.is/api/movie/?imdb=${imdbId}&key=${apiKeyKvikmyndir}`;
-            const request = fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.plot && data.imdb) {
-                        moviesWithPlot.push({
-                            imdb: formatImdbId(data.imdb),
-                            text: data.plot
-                        });
-                    }
-                })
-                .catch(error => reject(error))
+        movies.forEach(movie => {
+            if (movie.ids && movie.ids.imdb) {
+                const url = `http://kvikmyndir.is/api/movie/?imdb=${movie.ids.imdb}&key=${apiKeyKvikmyndir}`;
+                const request = fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.plot && data.imdb) {
+                            moviesWithPlot.push({
+                                imdb: formatImdbId(data.imdb),
+                                text: data.plot
+                            });
+                        }
+                    })
+                    .catch(error => reject(error))
 
-            promises.push(request);
-        }
+                promises.push(request);
+            }
+        });
 
         Promise.all(promises)
             .then(() => resolve(moviesWithPlot))
@@ -351,7 +346,7 @@ function getTmdbData(movies, fn, type) {
         let dataArr = [];
         let promises = [];
 
-        for (let i = 0; i < movies.length; i++) {
+        for (let i = 0, len = movies.length; i < len; i++) {
             const movie = movies[i];
 
             if (movie.ids && movie.ids.imdb) {
@@ -407,19 +402,21 @@ function getTrailersRequest(url, imdbId, delay) {
  * @returns {Object} trailersObj - newly created trailer object
  */
 function createTrailerObject(imdbId, trailers) {
-    let trailersObj = {
+    const trailersObj = {
         imdb: imdbId,
         data: []
     };
 
-    _.forEach(trailers, (trailer) => {
-        trailersObj.data.push({
-            id: trailer.id,
-            url: `https://www.youtube.com/embed/${trailer.key}?rel=0`,
-            size: trailer.size,
-            name: trailer.name
-        });
-    });
+    const trailer = t => {
+        return {
+            id: t.id,
+            url: `https://www.youtube.com/embed/${t.key}?rel=0`,
+            size: t.size,
+            name: t.name
+        }
+    };
+
+    trailersObj.data = trailers.map(trailer);
 
     return trailersObj;
 }
@@ -464,26 +461,18 @@ function createImagesObject(imdbId, images) {
     const sizes = [300, 1920]; // also avaliable 500 and 1000
 
     if (images.backdrops && images.backdrops.length > 0) {
-        _.forEach(sizes, (size) => {
-            let arrUrls = [];
-
-            _.forEach(images.backdrops, (backdrop) => {
-                arrUrls.push(`http://image.tmdb.org/t/p/w${size}${backdrop.file_path}`);
-            });
-
-            imagesObj.backdrops.push(arrUrls);
+        imagesObj.backdrops = sizes.map(size => {
+            return images.backdrops.map(backdrop => {
+                return `http://image.tmdb.org/t/p/w${size}${backdrop.file_path}`;
+            })
         });
     }
 
     if (images.posters && images.posters.length > 0) {
-        _.forEach(sizes, (size) => {
-            let arrUrls = [];
-
-            _.forEach(images.posters, (poster) => {
-                arrUrls.push(`http://image.tmdb.org/t/p/w${size}${poster.file_path}`);
-            });
-
-            imagesObj.posters.push(arrUrls);
+        imagesObj.posters = sizes.map(size => {
+            return images.posters.map(poster => {
+                return `http://image.tmdb.org/t/p/w${size}${poster.file_path}`;
+            })
         });
     }
 
