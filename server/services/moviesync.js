@@ -72,7 +72,7 @@ module.exports = (callback) => {
                 'ratings'
             ];
 
-            _.forEach(moviesByDay, (day, key) => {
+            moviesByDay.forEach(day => {
                 day.data = extendMoviesObjects(day.data, plotsArr, trailersArr, imagesArr, omdbArr, propsToDelete);
             });
 
