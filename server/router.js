@@ -1,6 +1,6 @@
-const authentication = require('./controllers/authentication');
-const passport = require('passport');
-const passportService = require('./services/passport');
+import authentication from './controllers/authentication';
+import passport from 'passport';
+import passportService from './services/passport';
 
 // Initialize require authentication helpers
 const requireAuth = passport.authenticate('jwt', {

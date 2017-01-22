@@ -1,14 +1,16 @@
-const fetch = require('node-fetch');
-const _ = require('lodash');
-const {
+import fetch from 'node-fetch';
+import _ from 'lodash';
+import {
     deepTrim
-} = require('./utils');
-const genres = require('../data/genres');
+} from './utils';
+import genres from '../data/genres';
+import {
+    MongoClient
+} from 'mongodb';
+
 const apiKeyKvikmyndir = process.env.API_KEY_KVIKMYNDIR;
 const apiKeyTmdb = process.env.API_KEY_TMDB;
 const mlabDevUrl = process.env.MLAB_DEV_URL;
-
-const MongoClient = require('mongodb').MongoClient;
 
 module.exports = (callback) => {
     // Contains all movies for 5 days in one big array [movie1, movie2, movie2, ...]

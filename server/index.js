@@ -1,20 +1,20 @@
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const bodyParser = require('body-parser');
-const morgan = require('morgan');
-const mongoose = require('mongoose');
-const router = require('../server/router');
-const movieSync = require('../server/services/moviesync.js');
+import {} from 'dotenv/config';
+import http from 'http';
+import express from 'express';
+import bodyParser from 'body-parser';
+import morgan from 'morgan';
+import mongoose from 'mongoose';
+import router from '../server/router';
+import movieSync from '../server/services/moviesync';
 const app = express();
 
-movieSync((error) => {
-    if (error) {
-        console.log('Error', error);
-    } else {
-        console.log('Success', 'Movie synd completed');
-    }
-});
+// movieSync((error) => {
+//     if (error) {
+//         console.log('Error', error);
+//     } else {
+//         console.log('Success', 'Movie synd completed');
+//     }
+// });
 
 // -------------------------------
 // App setup
@@ -23,7 +23,6 @@ app.use(bodyParser.json({
     type: '*/*'
 }));
 router(app);
-
 // -------------------------------
 // Server setup
 const port = (process.env.NODE_ENV === 'production') ? process.env.PORT || 8080 : 3001;

@@ -1,10 +1,11 @@
-import mongoose, {
-    Schema
-} from 'mongoose';
-import bcrypt from 'bcrypt-nodejs';
+'use strict';
+
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+var bcrypt = require('bcrypt-nodejs');
 
 // Define user model
-const userSchema = new Schema({
+var userSchema = new Schema({
     email: {
         type: String,
         unique: true,
@@ -24,14 +25,14 @@ const userSchema = new Schema({
 // On save, encrypt password
 // Before saving user model, run this function
 userSchema.pre('save', function (next) {
-    const user = this;
+    var user = this;
 
     // Generate a salt
-    bcrypt.genSalt(10, (error, salt) => {
+    bcrypt.genSalt(10, function (error, salt) {
         if (error) return next(error);
 
         // Encrypt our password using the salt above
-        bcrypt.hash(user.password, salt, null, (error, hash) => {
+        bcrypt.hash(user.password, salt, null, function (error, hash) {
             if (error) return next(error);
 
             // Override plain password with encrypted password
@@ -50,6 +51,6 @@ userSchema.methods.comparePassword = function (candidatePassword, callback) {
 };
 
 // Create model class
-const ModelClass = mongoose.model('user', userSchema);
+var ModelClass = mongoose.model('user', userSchema);
 
 module.exports = ModelClass;
