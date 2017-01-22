@@ -45,7 +45,6 @@ app.use(bodyParser.json({
 // Routes
 router(app);
 
-
 // Route handler that rules them all!
 app.get('*', (req, res) => {
   debug(color.cyan('http'), '%s - %s %s', req.ip, req.method, req.url);
