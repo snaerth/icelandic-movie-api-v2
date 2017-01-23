@@ -13,7 +13,7 @@ import movieSync from '../server/services/moviesync';
 const app = express();
 const server = new Server(app);
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../server/views'));
+app.set('views', path.join(__dirname, 'views'));
 
 // -------------------------------
 // App setup

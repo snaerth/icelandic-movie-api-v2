@@ -13,7 +13,7 @@ const requireSignin = passport.authenticate('local', {
 
 module.exports = (app) => {
   app.get('/', (req, res, next) => {
-    res.send('index');
+    res.render('index');
   });
 
   app.get('/api', requireAuth, (req, res) => {
