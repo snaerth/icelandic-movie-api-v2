@@ -1,35 +1,40 @@
 import {} from 'dotenv/config';
-import http from 'http';
+import path from 'path';
+import { Server } from 'http';
 import express from 'express';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import router from '../server/router';
 import movieSync from '../server/services/moviesync';
-const app = express();
 
-// movieSync((error) => {
-//     if (error) {
-//         console.log('Error', error);
-//     } else {
-//         console.log('Success', 'Movie synd completed');
-//     }
-// });
+// -------------------------------
+// Initialize the server and configure support for ejs templates
+const app = express();
+const server = new Server(app);
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../server/views'));
 
 // -------------------------------
 // App setup
 app.use(morgan('combined'));
+// define the folder that will be used for static assets
+app.use(express.static(path.join(__dirname, 'client/static'))); 
 app.use(bodyParser.json({
     type: '*/*'
 }));
-router(app);
-// -------------------------------
-// Server setup
-const port = (process.env.NODE_ENV === 'production') ? process.env.PORT || 8080 : 3001;
-const server = http.createServer(app);
 
 // -------------------------------
-// Server listen
-server.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+// Setup all routes
+router(app);
+
+// -------------------------------
+// Start the server
+const port = process.env.PORT || 3000;
+const env = process.env.NODE_ENV || 'production';
+server.listen(port, err => {
+  if (err) {
+    return console.error(err);
+  }
+  console.info(`Server running on http://localhost:${port} [${env}]`);
 });

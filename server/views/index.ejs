@@ -10,13 +10,13 @@
       <link rel="stylesheet" type="text/css" href="/styles.css">
     <% } %>
   </head>
-  <body>
+  <body>test
     <div id="app"><%- renderedRoot %></div>
     <script>
       window.__INITIAL_STATE__ = <%- JSON.stringify(initialState) %>;
     </script>
     <% if (includeClient) { %>
-      <script src="/client.js"></script>
+      <script src="/bundle.js"></script>
     <% } %>
   </body>
 </html>

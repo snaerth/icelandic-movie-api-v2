@@ -12,6 +12,10 @@ const requireSignin = passport.authenticate('local', {
 });
 
 module.exports = (app) => {
+  app.get('/', (req, res, next) => {
+    res.send('index');
+  });
+
   app.get('/api', requireAuth, (req, res) => {
     res.send('hurra');
   });
